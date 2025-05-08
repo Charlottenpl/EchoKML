@@ -1,0 +1,16 @@
+PODS:
+  - EchoKML (1.0)
+
+DEPENDENCIES:
+  - EchoKML (from `../EchoKML`)
+
+EXTERNAL SOURCES:
+  EchoKML:
+    :path: "../EchoKML"
+
+SPEC CHECKSUMS:
+  EchoKML: ca9e907396ea56f9b802f3eb220d75184c08d8bf
+
+PODFILE CHECKSUM: 4f029e3bcafbc3ad1bf08dfc3bc512765276c47d
+
+COCOAPODS: 1.16.2
