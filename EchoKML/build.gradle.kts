@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.serialization)
 }
 
 kotlin {
@@ -37,6 +38,9 @@ kotlin {
             implementation(libs.ktor.client.core) // Ktor 核心库
             implementation(libs.ktor.client.content.negotiation) // Ktor 序列化库
             implementation(libs.ktor.serialization.kotlinx.json) // Ktor 序列化库 Json 格式插件
+            implementation(libs.ktor.client.logging) // Ktor 日志库
+            implementation(libs.kotlinx.serialization.json) // 序列化库
+
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)  // Android 引擎
