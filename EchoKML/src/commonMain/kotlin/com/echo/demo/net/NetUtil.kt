@@ -1,7 +1,7 @@
 package com.echo.demo.net
 
 import com.echo.demo.net.bean.NetCallback
-import com.echo.demo.net.bean.Net
+import com.echo.demo.net.bean.NetParam
 import com.echo.demo.net.bean.NetResult
 import com.echo.demo.net.config.C_NET_BASE_URL
 import com.echo.demo.net.config.C_NET_CONNECT_TIMEOUT
@@ -85,8 +85,9 @@ class NetUtil {
          *      - success
          *  - fail，后端错误
          */
-        inline fun <reified T, reified R> post(
-            param: Net<T, R>
+        inline fun <reified R> post(
+            param: NetParam,
+            callback: NetCallback<R>
         ){
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -97,15 +98,15 @@ class NetUtil {
                     }.body()
 
                     CoroutineScope(Dispatchers.Default).launch {
-                        param.callback.onSuccess(result)
+                        callback.onSuccess(result)
                     }
                 }catch (serialization: SerializationException){
                     // TODO 处理失败返回
-                    CoroutineScope(Dispatchers.Default).launch { param.callback.onFail() }
+                    CoroutineScope(Dispatchers.Default).launch { callback.onFail() }
                 }catch (network: IOException){
-                    CoroutineScope(Dispatchers.Default).launch { param.callback.onFail() }
+                    CoroutineScope(Dispatchers.Default).launch { callback.onFail() }
                 }catch (unknown: Exception){
-                    CoroutineScope(Dispatchers.Default).launch { param.callback.onFail() }
+                    CoroutineScope(Dispatchers.Default).launch { callback.onFail() }
                 }
             }
 
