@@ -40,10 +40,12 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json) // Ktor 序列化库 Json 格式插件
             implementation(libs.ktor.client.logging) // Ktor 日志库
             implementation(libs.kotlinx.serialization.json) // 序列化库
+            implementation(libs.kotlinx.coroutines.core)
 
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)  // Android 引擎
+            implementation(libs.kotlinx.coroutines.android)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)  // iOS 引擎

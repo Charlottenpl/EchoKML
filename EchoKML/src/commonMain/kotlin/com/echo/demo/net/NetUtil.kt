@@ -1,9 +1,8 @@
 package com.echo.demo.net
 
-import com.echo.demo.net.bean.GetParam
 import com.echo.demo.net.bean.NetCallback
+import com.echo.demo.net.bean.Net
 import com.echo.demo.net.bean.NetResult
-import com.echo.demo.net.bean.PostParam
 import com.echo.demo.net.config.C_NET_BASE_URL
 import com.echo.demo.net.config.C_NET_CONNECT_TIMEOUT
 import com.echo.demo.net.config.C_NET_REQUIRE_TIMEOUT
@@ -19,24 +18,23 @@ import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.utils.io.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import kotlin.math.max
 
-class Net {
+class NetUtil {
     companion object{
         val client = HttpClient(createEngine()){
             expectSuccess = true
@@ -78,16 +76,6 @@ class Net {
             }
         }
 
-        suspend inline fun <reified T> get(
-            param: GetParam,
-            callback: NetCallback<T>
-        ){
-            return client.get(param.url){
-                param.headers.forEach { (key, value) -> header(key, value) }
-                url { param.queryParams.forEach { (key, value) -> parameters.append(key, value.toString()) } }
-            }.body()
-        }
-
         /**
          * 处理逻辑：
          * - 如果post抛出异常
@@ -97,32 +85,30 @@ class Net {
          *      - success
          *  - fail，后端错误
          */
-        suspend inline fun <reified T, reified R> post(
-            param: PostParam<R>,
-            callback: NetCallback<T>
+        inline fun <reified T, reified R> post(
+            param: Net<T, R>
         ){
-            try {
-                val result: NetResult<T> = client.post(param.url) {
-                    param.headers.forEach { (key, value) -> header(key, value) }
-                    contentType(ContentType.Application.Json)
-                    setBody(param.data)
-                }.body()
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val result: NetResult<R> = client.post(param.url) {
+                        param.headers.forEach { (key, value) -> header(key, value) }
+                        contentType(ContentType.Application.Json)
+                        setBody(param.data)
+                    }.body()
 
-                if (result.errorNo != 0){
-                    // TODO 后端返回错误
-                    callback.onFail()
-                    return
+                    CoroutineScope(Dispatchers.Default).launch {
+                        param.callback.onSuccess(result)
+                    }
+                }catch (serialization: SerializationException){
+                    // TODO 处理失败返回
+                    CoroutineScope(Dispatchers.Default).launch { param.callback.onFail() }
+                }catch (network: IOException){
+                    CoroutineScope(Dispatchers.Default).launch { param.callback.onFail() }
+                }catch (unknown: Exception){
+                    CoroutineScope(Dispatchers.Default).launch { param.callback.onFail() }
                 }
-
-                callback.onSuccess(result)
-            }catch (serialization: SerializationException){
-                // TODO 处理失败返回
-                callback.onFail()
-            }catch (network: IOException){
-                callback.onFail()
-            }catch (unknown: Exception){
-                callback.onFail()
             }
+
         }
     }
 }

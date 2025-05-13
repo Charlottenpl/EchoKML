@@ -42,3 +42,5 @@ captures
 .cxx
 local.properties
 xcuserdata
+*.klib
+/.kotlin
